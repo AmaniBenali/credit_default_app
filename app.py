@@ -15,7 +15,8 @@ def load_models():
         'KNN': joblib.load("models/knn.pkl"),
         'Decision Tree': joblib.load("models/dtree.pkl"),
         'SVM': joblib.load("models/svm.pkl"),
-        'XGBoost': joblib.load("models/xgb.model"),
+        'XGBoost': joblib.load("models/xgb.pkl"),
+
     }
     scaler = joblib.load("models/scaler.pkl")
     return models, scaler
