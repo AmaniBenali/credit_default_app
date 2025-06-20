@@ -24,7 +24,7 @@ def load_models():
 models, scaler = load_models()
 
 # Upload input xlsx or use example
-uploaded_file = st.file_uploader("Upload input file (Excel .xls)", type=["xls"])
+uploaded_file = st.file_uploader("Upload input file (Excel .xlsx)", type=["xlsx"])
 
 
 if uploaded_file is not None:
@@ -32,7 +32,7 @@ if uploaded_file is not None:
     st.write("Input data preview:")
     st.dataframe(input_df.head())
 else:
-    st.warning("Please upload an Excel (.xls) file to proceed.")
+    st.warning("Please upload an Excel (.xlsx) file to proceed.")
     st.stop()
 
 # Preprocess input (scale)
