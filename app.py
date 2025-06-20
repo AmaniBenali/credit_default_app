@@ -23,17 +23,17 @@ def load_models():
 
 models, scaler = load_models()
 
-# Upload input CSV or use example
-uploaded_file = st.file_uploader("Upload input CSV (same features as training data)", type=["csv"])
+# Upload input xlsx or use example
+uploaded_file = st.file_uploader("Upload input file (Excel .xlsx)", type=["xlsx"])
 
-if uploaded_file:
-    input_df = pd.read_csv(uploaded_file)
+
+if uploaded_file is not None:
+    input_df = pd.read_excel(uploaded_file)
+    st.write("Input data preview:")
+    st.dataframe(input_df.head())
 else:
-    input_df = pd.read_csv("models/example_input.csv")
-    st.info("Using example input data. Upload your CSV to use your own data.")
-
-st.write("Input data preview:")
-st.dataframe(input_df.head())
+    st.warning("Please upload an Excel (.xlsx) file to proceed.")
+    st.stop()
 
 # Preprocess input (scale)
 input_ids = input_df['ID']
