@@ -5,7 +5,7 @@ import os
 
 # Load models and scaler
 models_dir = "models/"
-scaler = joblib.load(models_dir + "scaler.pkl")
+scaler = joblib.load(models_dir + "scaler (2).pkl")
 models = {
     "Logistic Regression": joblib.load(models_dir + "logreg.pkl"),
     "KNN": joblib.load(models_dir + "knn.pkl"),
@@ -15,7 +15,7 @@ models = {
 }
 
 st.title("Credit Card Default Prediction")
-st.write("Upload your processed .xls file (with the exact same preprocessing used for training).")
+st.write("Upload your processed .xlsx file (with the exact same preprocessing used for training).")
 
 uploaded_file = st.file_uploader("Upload input file (.xlsx)", type=["xlsx"])
 
