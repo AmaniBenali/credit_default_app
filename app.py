@@ -1,83 +1,52 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import matplotlib.pyplot as plt
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_curve, auc
-import helpers  # make sure helpers.py is in the same folder!
+import os
+
+# Load models and scaler
+models_dir = "models/"
+scaler = joblib.load(models_dir + "scaler.pkl")
+models = {
+    "Logistic Regression": joblib.load(models_dir + "logreg.pkl"),
+    "KNN": joblib.load(models_dir + "knn.pkl"),
+    "Decision Tree": joblib.load(models_dir + "dtree.pkl"),
+    "SVM": joblib.load(models_dir + "svm.pkl"),
+    "XGBoost": joblib.load(models_dir + "xgb.pkl"),
+}
 
 st.title("Credit Card Default Prediction")
+st.write("Upload your processed .xls file (with the exact same preprocessing used for training).")
 
-# Load models once
-@st.cache_resource
-def load_models():
-    models = {
-        'Logistic Regression': joblib.load("models/logreg.pkl"),
-        'KNN': joblib.load("models/knn.pkl"),
-        'Decision Tree': joblib.load("models/dtree.pkl"),
-        'SVM': joblib.load("models/svm.pkl"),
-        'XGBoost': joblib.load("models/xgb.pkl"),
-
-    }
-    scaler = joblib.load("models/scaler.pkl")
-    return models, scaler
-
-models, scaler = load_models()
-
-# Upload input xlsx or use example
-uploaded_file = st.file_uploader("Upload input file (Excel .xlsx)", type=["xlsx"])
-
+uploaded_file = st.file_uploader("Upload input file (.xlsx)", type=["xlsx"])
 
 if uploaded_file is not None:
-    input_df = pd.read_excel(uploaded_file)
-    st.write("Input data preview:")
-    st.dataframe(input_df.head())
+    try:
+        input_df = pd.read_excel(uploaded_file)
+
+        st.subheader("Input Data Preview:")
+        st.dataframe(input_df.head())
+
+        # Drop 'ID' column if exists
+        if 'ID' in input_df.columns:
+            input_features = input_df.drop(columns=['ID'])
+        else:
+            input_features = input_df.copy()
+
+        # Scale features
+        input_scaled = scaler.transform(input_features)
+
+        st.subheader("Predictions:")
+        for name, model in models.items():
+            pred = model.predict(input_scaled)
+            prob = model.predict_proba(input_scaled)[:, 1]  # Probability of default
+
+            st.markdown(f"**{name}**")
+            st.write(f"Prediction: {'Default' if pred[0] == 1 else 'No Default'}")
+            st.write(f"Probability of Default: {prob[0]:.2%}")
+            st.markdown("---")
+
+    except Exception as e:
+        st.error("An error occurred while processing your file. Make sure it's the correctly processed version with expected columns.")
+        st.exception(e)
 else:
-    st.warning("Please upload an Excel (.xlsx) file to proceed.")
-    st.stop()
-
-# Preprocess input (scale)
-input_ids = input_df['ID']
-input_features = input_df.drop('ID', axis=1)
-input_scaled = scaler.transform(input_features)
-
-st.markdown("---")
-st.header("Model Predictions")
-
-results = {}
-
-for name, model in models.items():
-    preds = model.predict(input_scaled)
-    proba = model.predict_proba(input_scaled)[:,1] if hasattr(model, "predict_proba") else None
-    results[name] = (preds, proba)
-    st.subheader(name)
-    st.write("Predictions:")
-    st.write(preds)
-    if proba is not None:
-        st.write("Predicted probabilities for default:")
-        st.write(proba.round(3))
-
-# Optional: Upload true labels to show metrics
-true_labels_file = st.file_uploader("Upload true labels CSV (with 'def_pay' column) to evaluate models", type=["csv"])
-if true_labels_file:
-    true_df = pd.read_csv(true_labels_file)
-    y_true = true_df['def_pay']
-    st.header("Model Performance Metrics")
-    for name, (preds, proba) in results.items():
-        st.subheader(name)
-        st.write(classification_report(y_true, preds, zero_division=0))
-        cm = confusion_matrix(y_true, preds)
-        st.write("Confusion Matrix:")
-        st.write(cm)
-        acc = accuracy_score(y_true, preds)
-        st.write(f"Accuracy: {acc:.3f}")
-        if proba is not None:
-            fpr, tpr, _ = roc_curve(y_true, proba)
-            roc_auc = auc(fpr, tpr)
-            fig, ax = plt.subplots()
-            ax.plot(fpr, tpr, label=f'ROC curve (AUC = {roc_auc:.2f})')
-            ax.plot([0, 1], [0, 1], linestyle='--')
-            ax.set_xlabel('False Positive Rate')
-            ax.set_ylabel('True Positive Rate')
-            ax.set_title(f'ROC Curve - {name}')
-            ax.legend(loc='lower right')
-            st.pyplot(fig)
+    st.info("Please upload a .xlsx file containing the processed input data.")
